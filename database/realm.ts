@@ -36,6 +36,36 @@ export class Setting extends Realm.Object<Setting> {
   };
 }
 
+export class Receipt extends Realm.Object<Receipt> {
+  _id!: Realm.BSON.ObjectId;
+  receiptNumber!: string;
+  customer!: string;
+  address!: string;
+  copraPrice!: string;
+  totalCopra!: string;
+  totalDeduction!: string;
+  transportationFee!: string;
+  totalPrice!: string;
+  createdAt!: Date;
+
+  static schema: ObjectSchema = {
+    name: "Receipt",
+    primaryKey: "_id",
+    properties: {
+      _id: "objectId",
+      receiptNumber: "string",
+      customer: "string",
+      address: "string",
+      copraPrice: "string",
+      totalCopra: "string",
+      totalDeduction: "string",
+      transportationFee: "string",
+      totalPrice: "string",
+      createdAt: "date",
+    },
+  };
+}
+
 // Default users for the app
 const DEFAULT_USERS = [
   { username: "luansingjavier", password: "thgirb11" },
@@ -74,11 +104,53 @@ class RealmDatabase {
     }
 
     this.initializing = true;
+    console.log("Initializing Realm - starting process");
 
     try {
       this.realm = await Realm.open({
-        schema: [User, Setting],
-        schemaVersion: 1,
+        schema: [User, Setting, Receipt],
+        schemaVersion: 3, // Updated schema version
+        onMigration: (oldRealm: Realm, newRealm: Realm) => {
+          // Migration for schema changes
+          console.log(
+            "Migrating from schema version",
+            oldRealm.schemaVersion,
+            "to",
+            newRealm.schemaVersion
+          );
+
+          // If upgrading from a previous version, ensure we add new fields to existing Receipt objects
+          if (oldRealm.schemaVersion < 3) {
+            const oldReceipts = oldRealm.objects<Receipt>("Receipt");
+            const newReceipts = newRealm.objects<Receipt>("Receipt");
+
+            // For each receipt in the old realm
+            for (let i = 0; i < oldReceipts.length; i++) {
+              // Set default values for new fields if they don't exist
+              if (newReceipts[i]) {
+                const newReceipt = newReceipts[i];
+                if (!("address" in oldReceipts[i])) {
+                  newReceipt.address = "";
+                }
+                if (!("copraPrice" in oldReceipts[i])) {
+                  newReceipt.copraPrice = "0";
+                }
+                if (!("totalCopra" in oldReceipts[i])) {
+                  newReceipt.totalCopra = "0";
+                }
+                if (!("totalDeduction" in oldReceipts[i])) {
+                  newReceipt.totalDeduction = "0";
+                }
+                if (!("transportationFee" in oldReceipts[i])) {
+                  newReceipt.transportationFee = "0";
+                }
+                if (!("totalPrice" in oldReceipts[i])) {
+                  newReceipt.totalPrice = "0";
+                }
+              }
+            }
+          }
+        },
       });
       console.log("Realm database opened successfully");
       this.initialized = true;
@@ -88,6 +160,8 @@ class RealmDatabase {
       console.error("Failed to open Realm database:", error);
       // Reset state so future calls can retry
       this.realm = null;
+      this.initialized = false;
+      throw error; // Re-throw the error to be caught by callers
     } finally {
       this.initializing = false;
     }
@@ -150,8 +224,21 @@ class RealmDatabase {
 
   // Ensure realm is initialized before operations
   private async ensureRealm(): Promise<boolean> {
-    if (!this.realm) {
-      await this.initRealm();
+    if (!this.realm && !this.initialized) {
+      console.log("Realm not initialized, attempting to initialize now");
+      try {
+        await this.initRealm();
+        if (!this.realm) {
+          console.error(
+            "Failed to initialize Realm - realm is still null after initialization"
+          );
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error during Realm initialization:", error);
+        return false;
+      }
     }
 
     return !!this.realm;
@@ -161,21 +248,37 @@ class RealmDatabase {
 
   // Login user
   async loginUser(username: string, password: string): Promise<boolean> {
-    const hasRealm = await this.ensureRealm();
-    if (!hasRealm) {
-      console.error("Cannot login - Realm not initialized");
+    console.log(`Login attempt for: ${username}`);
+
+    // Try to ensure realm up to 3 times
+    let retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      const hasRealm = await this.ensureRealm();
+      if (hasRealm) {
+        break;
+      }
+
+      console.log(
+        `Realm initialization failed, retry ${retryCount + 1}/${maxRetries}`
+      );
+      retryCount++;
+
+      // Wait a bit before retrying
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    if (!this.realm) {
+      console.error("Cannot login - Realm not initialized after retries");
       return false;
     }
 
-    console.log(`Login attempt for: ${username}`);
-
     try {
       // Find user with matching username and password
-      const user = this.realm!.objects(User).filtered(
-        "username == $0 AND password == $1",
-        username,
-        password
-      )[0];
+      const user = this.realm
+        .objects(User)
+        .filtered("username == $0 AND password == $1", username, password)[0];
 
       if (user) {
         console.log("Login successful");
@@ -346,6 +449,133 @@ class RealmDatabase {
     }
   }
 
+  // Generate a unique receipt number
+  async generateUniqueReceiptNumber(): Promise<string> {
+    const hasRealm = await this.ensureRealm();
+    if (!hasRealm) {
+      console.error("Cannot generate receipt number - Realm not initialized");
+      return `RCT-${Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0")}`;
+    }
+
+    try {
+      // Get the latest receipt number
+      const receipts = this.realm!.objects(Receipt).sorted("createdAt", true);
+      let receiptCount = receipts.length;
+
+      // Generate a new receipt number with an incremented counter
+      let newReceiptNumber = `RCT-${(receiptCount + 1)
+        .toString()
+        .padStart(4, "0")}`;
+
+      // Make sure this receipt number is unique (it should be, but let's be extra safe)
+      while (
+        this.realm!.objects(Receipt).filtered(
+          "receiptNumber == $0",
+          newReceiptNumber
+        ).length > 0
+      ) {
+        receiptCount++;
+        newReceiptNumber = `RCT-${(receiptCount + 1)
+          .toString()
+          .padStart(4, "0")}`;
+      }
+
+      console.log(`Generated unique receipt number: ${newReceiptNumber}`);
+      return newReceiptNumber;
+    } catch (error) {
+      console.error("Error generating unique receipt number:", error);
+      // Fallback to random number if there's an error
+      return `RCT-${Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, "0")}`;
+    }
+  }
+
+  // Save a receipt record to track used receipt numbers
+  async saveReceipt(
+    receiptNumber: string,
+    customer: string,
+    address: string,
+    copraPrice: string,
+    totalCopra: string,
+    totalDeduction: string,
+    transportationFee: string,
+    totalPrice: string
+  ): Promise<void> {
+    const hasRealm = await this.ensureRealm();
+    if (!hasRealm) {
+      console.error("Cannot save receipt - Realm not initialized");
+      return;
+    }
+
+    console.log(`Saving receipt: ${receiptNumber} for ${customer}`);
+
+    try {
+      // Check if receipt already exists
+      const existingReceipt = this.realm!.objects(Receipt).filtered(
+        "receiptNumber == $0",
+        receiptNumber
+      )[0];
+
+      if (existingReceipt) {
+        console.log("Receipt number already exists");
+        return;
+      }
+
+      // Create new receipt
+      this.realm!.write(() => {
+        this.realm!.create(Receipt, {
+          _id: new Realm.BSON.ObjectId(),
+          receiptNumber,
+          customer,
+          address,
+          copraPrice,
+          totalCopra,
+          totalDeduction,
+          transportationFee,
+          totalPrice,
+          createdAt: new Date(),
+        });
+      });
+
+      console.log("Receipt saved successfully");
+    } catch (error) {
+      console.error("Error saving receipt:", error);
+    }
+  }
+
+  // Get all issued receipt numbers
+  async getAllReceipts(): Promise<any[]> {
+    const hasRealm = await this.ensureRealm();
+    if (!hasRealm) {
+      console.error("Cannot get receipts - Realm not initialized");
+      return [];
+    }
+
+    console.log("Getting all receipts");
+
+    try {
+      const receipts = this.realm!.objects(Receipt).sorted("createdAt", true);
+      return Array.from(receipts).map((receipt) => ({
+        id: receipt._id.toString(),
+        receiptNumber: receipt.receiptNumber,
+        customer: receipt.customer,
+        address: receipt.address,
+        copraPrice: receipt.copraPrice,
+        totalCopra: receipt.totalCopra,
+        totalDeduction: receipt.totalDeduction,
+        transportationFee: receipt.transportationFee,
+        totalPrice: receipt.totalPrice,
+        createdAt: receipt.createdAt,
+      }));
+    } catch (error) {
+      console.error("Error getting receipts:", error);
+      return [];
+    }
+  }
+
   // Reset database (for testing/development)
   async resetDatabase(): Promise<void> {
     const hasRealm = await this.ensureRealm();
@@ -374,8 +604,39 @@ class RealmDatabase {
 
   // Public method to explicitly initialize the realm
   async initialize(): Promise<void> {
-    if (!this.initialized && !this.initializing) {
+    console.log("Explicit initialize() method called");
+
+    if (this.initialized) {
+      console.log("Realm already initialized, skipping initialization");
+      return;
+    }
+
+    if (this.initializing) {
+      console.log("Realm already initializing, waiting for completion");
+
+      // Wait for initialization to complete (up to 5 seconds)
+      let attempts = 0;
+      while (this.initializing && attempts < 50) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      if (this.initialized) {
+        console.log("Realm initialization completed successfully");
+        return;
+      } else {
+        throw new Error("Realm initialization timed out or failed");
+      }
+    }
+
+    try {
       await this.initRealm();
+      if (!this.initialized) {
+        throw new Error("Realm initialization failed");
+      }
+    } catch (error) {
+      console.error("Failed to initialize Realm:", error);
+      throw error;
     }
   }
 

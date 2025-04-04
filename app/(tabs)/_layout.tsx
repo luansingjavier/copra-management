@@ -40,11 +40,19 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: "Explore",
+          title: "Printer",
           tabBarIcon: ({ color }) => (
-            <IconSymbol name="chart.bar" color={color} />
+            <IconSymbol name="printer" color={color} />
           ),
-          tabBarLabel: "Explore",
+          tabBarLabel: "Printer",
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: "History",
+          tabBarIcon: ({ color }) => <IconSymbol name="clock" color={color} />,
+          tabBarLabel: "History",
         }}
       />
       <Tabs.Screen

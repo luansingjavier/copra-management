@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   TextInput,
+  SafeAreaView,
 } from "react-native";
 import { useAuthStore } from "../store/authStore";
 import {
@@ -109,90 +110,94 @@ const SettingsScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.subtitle}>Logged in as: {user}</Text>
+        <Text style={styles.headerTitle}>Settings</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Default Values</Text>
-        <Text style={styles.label}>Default Copra Price (per kg)</Text>
-        <TextInput
-          style={styles.input}
-          value={defaultCopraPrice}
-          onChangeText={setDefaultCopraPrice}
-          keyboardType="numeric"
-          placeholder="Enter default copra price"
-        />
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Default Values</Text>
+          <Text style={styles.label}>Default Copra Price (per kg)</Text>
+          <TextInput
+            style={styles.input}
+            value={defaultCopraPrice}
+            onChangeText={setDefaultCopraPrice}
+            keyboardType="numeric"
+            placeholder="Enter default copra price"
+          />
 
-        <Text style={styles.label}>Default Transportation Fee</Text>
-        <TextInput
-          style={styles.input}
-          value={defaultTransportationFee}
-          onChangeText={setDefaultTransportationFee}
-          keyboardType="numeric"
-          placeholder="Enter default transportation fee"
-        />
+          <Text style={styles.label}>Default Transportation Fee</Text>
+          <TextInput
+            style={styles.input}
+            value={defaultTransportationFee}
+            onChangeText={setDefaultTransportationFee}
+            keyboardType="numeric"
+            placeholder="Enter default transportation fee"
+          />
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={saveDefaults}
-          disabled={isSaving}
-        >
-          {isSaving ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Save Default Values</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={saveDefaults}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Save Default Values</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Account</Text>
-        <TouchableOpacity style={styles.button} onPress={logout}>
-          <Text style={styles.buttonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <TouchableOpacity style={styles.button} onPress={logout}>
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Database Management</Text>
-        <TouchableOpacity
-          style={[styles.button, styles.dangerButton]}
-          onPress={handleResetDatabase}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Reset Database</Text>
-          )}
-        </TouchableOpacity>
-        <Text style={styles.warning}>
-          Warning: This will reset all data and add default users.
-        </Text>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Database Management</Text>
+          <TouchableOpacity
+            style={[styles.button, styles.dangerButton]}
+            onPress={handleResetDatabase}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Reset Database</Text>
+            )}
+          </TouchableOpacity>
+          <Text style={styles.warning}>
+            Warning: This will reset all data and add default users.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#f5f5f5",
   },
   header: {
-    marginBottom: 24,
+    backgroundColor: "#1a5653",
+    padding: 16,
+    paddingTop: 60,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
+  headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 8,
+    color: "white",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
+  scrollContainer: {
+    flex: 1,
+    padding: 16,
   },
   section: {
     backgroundColor: "#fff",

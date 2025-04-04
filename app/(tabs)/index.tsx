@@ -1,22 +1,30 @@
-import { StyleSheet } from "react-native";
 import {
-  Text,
+  StyleSheet,
   View,
+  Text,
   TextInput,
   TouchableOpacity,
+  ScrollView,
   Alert,
   Modal,
-  ScrollView,
-  Image,
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuthStore } from "../../store/authStore";
-import LoginScreen from "../../components/LoginScreen";
-import { useEffect, useState, useMemo } from "react";
-import { getDefaultSettings } from "../../database/database";
-import * as yup from "yup";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useState, useEffect, useMemo } from "react";
+import { format } from "date-fns";
+import { useAuthStore } from "../../store/authStore";
+import {
+  getDefaultSettings,
+  generateUniqueReceiptNumber,
+  saveReceipt,
+} from "../../database/database";
+import PrinterService from "../../services/PrinterServiceFactory";
+import LoginScreen from "../../components/LoginScreen";
+import { router } from "expo-router";
+import { Snackbar } from "react-native-paper";
 
 // Form validation schema
 const receiptFormSchema = yup.object().shape({
@@ -71,6 +79,9 @@ export default function HomeScreen() {
   const [isLoadingDefaults, setIsLoadingDefaults] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [receiptNumber, setReceiptNumber] = useState("");
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   // Initialize react-hook-form
   const {
@@ -101,6 +112,7 @@ export default function HomeScreen() {
   useEffect(() => {
     if (isAuthenticated) {
       loadDefaultValues();
+      fetchReceiptNumber();
     }
   }, [isAuthenticated]);
 
@@ -117,6 +129,23 @@ export default function HomeScreen() {
       console.error("Error loading default values:", error);
     } finally {
       setIsLoadingDefaults(false);
+    }
+  };
+
+  // Fetch a unique receipt number from the database
+  const fetchReceiptNumber = async () => {
+    try {
+      const uniqueReceiptNumber = await generateUniqueReceiptNumber();
+      setReceiptNumber(uniqueReceiptNumber);
+      console.log(`Generated receipt number: ${uniqueReceiptNumber}`);
+    } catch (error) {
+      console.error("Error generating receipt number:", error);
+      // Fallback to random number generation if database method fails
+      setReceiptNumber(
+        `RCT-${Math.floor(Math.random() * 10000)
+          .toString()
+          .padStart(4, "0")}`
+      );
     }
   };
 
@@ -158,8 +187,39 @@ export default function HomeScreen() {
     );
   }, [isAuthenticated]);
 
-  const onSubmit = handleSubmit((data: ReceiptFormData) => {
-    setShowReceiptModal(true);
+  const onSubmit = handleSubmit(async (data: ReceiptFormData) => {
+    try {
+      // Save receipt data to database
+      await saveReceipt(
+        receiptNumber,
+        data.customer,
+        data.address,
+        data.copraPrice,
+        data.totalCopra,
+        data.totalDeduction,
+        data.transportationFee,
+        totalPrice
+      );
+
+      // Generate a new receipt number for next use
+      await fetchReceiptNumber();
+
+      // Set snackbar message and show it
+      setSnackbarMessage("Receipt data saved successfully");
+      setSnackbarVisible(true);
+
+      // Show receipt modal after a short delay to ensure Snackbar is visible
+      setTimeout(() => {
+        setShowReceiptModal(true);
+      }, 1000);
+    } catch (error: any) {
+      console.error("Error saving receipt data:", error);
+      // Show error in snackbar instead of alert
+      setSnackbarMessage(
+        `Failed to save receipt: ${error.message || "Unknown error"}`
+      );
+      setSnackbarVisible(true);
+    }
   });
 
   // Format the current date
@@ -172,24 +232,157 @@ export default function HomeScreen() {
     });
   }, []);
 
-  // Generate receipt number
-  const receiptNumber = useMemo(() => {
-    return `RCT-${Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0")}`;
-  }, [showPrintPreview]);
+  // Format the current date and time for display
+  const currentDateTime = useMemo(() => {
+    const date = new Date();
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }, []);
 
-  // When not authenticated, show login screen
+  // Add the receipt generation function
+  const generateReceiptText = () => {
+    // Calculate gross amount (total copra * price)
+    const calculateGrossAmount = () => {
+      const copra = parseFloat(watch("totalCopra")) || 0;
+      const price = parseFloat(watch("copraPrice")) || 0;
+      return copra * price;
+    };
+
+    // Calculate final amount
+    const calculateTotalAmount = () => {
+      const copra = parseFloat(watch("totalCopra")) || 0;
+      const price = parseFloat(watch("copraPrice")) || 0;
+      const deduction = parseFloat(watch("totalDeduction")) || 0;
+      const fee = parseFloat(watch("transportationFee")) || 0;
+
+      // Calculate: (Total Copra - Deduction) * Price per kg + Transportation Fee
+      const netCopra = copra - deduction;
+      return netCopra * price + fee;
+    };
+
+    const totalAmount = calculateTotalAmount();
+    const formattedDate = format(new Date(), "MM/dd/yyyy HH:mm:ss");
+
+    // Format the receipt for a thermal printer
+    return `
+LUANSING RICE MILL
+#10 Odicon, Pasacao, Camarines Sur
+Naga City, Philippines
+Cell: 09292800067
+
+RECEIPT #: ${receiptNumber}
+DATE: ${formattedDate}
+
+CUSTOMER: ${watch("customer")}
+ADDRESS: ${watch("address")}
+
+COPRA PRICE/KG: ₱${watch("copraPrice")}
+TOTAL COPRA: ${watch("totalCopra")} kg
+TOTAL: ₱${calculateGrossAmount().toFixed(2)}
+
+DEDUCTION: ₱${watch("totalDeduction")}
+TRANSPORTATION: ₱${watch("transportationFee")}
+
+NET AMOUNT: ₱${totalAmount.toFixed(2)}
+
+Thank you for your business!
+* This serves as your official receipt *
+`;
+  };
+
+  // Add a function to handle printing
+  const handlePrint = async () => {
+    try {
+      // Check if a printer is connected
+      const connectedPrinter = PrinterService.getConnectedPrinter();
+
+      if (!connectedPrinter) {
+        setSnackbarMessage(
+          "No printer connected. Please connect a printer first."
+        );
+        setSnackbarVisible(true);
+
+        // Close the receipt preview modal
+        setShowPrintPreview(false);
+
+        // Navigate to printer tab after a short delay
+        setTimeout(() => {
+          setShowReceiptModal(false);
+          router.push("/(tabs)/explore");
+        }, 1500);
+        return;
+      }
+
+      // Close the print preview modal
+      setShowPrintPreview(false);
+
+      // Show printing message
+      setSnackbarMessage(`Sending receipt to ${connectedPrinter.name}...`);
+      setSnackbarVisible(true);
+
+      // Generate receipt text
+      const receiptText = generateReceiptText();
+
+      // Print the receipt
+      const success = await PrinterService.printReceipt(receiptText);
+
+      if (success) {
+        // Save the used receipt number to the database if not already saved
+        await saveReceipt(
+          receiptNumber,
+          watch("customer"),
+          watch("address"),
+          watch("copraPrice"),
+          watch("totalCopra"),
+          watch("totalDeduction"),
+          watch("transportationFee"),
+          totalPrice
+        );
+
+        // Generate a new receipt number for next time
+        fetchReceiptNumber();
+
+        // Show success message using Snackbar
+        setSnackbarMessage("Receipt printed successfully");
+        setSnackbarVisible(true);
+
+        // Close the receipt modal after a short delay
+        setTimeout(() => {
+          setShowReceiptModal(false);
+        }, 1500);
+      } else {
+        // Show error message using Snackbar
+        setSnackbarMessage("Failed to print receipt. Please try again.");
+        setSnackbarVisible(true);
+      }
+    } catch (error) {
+      console.error("Error printing receipt:", error);
+      // Show error message using Snackbar
+      setSnackbarMessage(
+        "Error printing receipt. Please check printer connection."
+      );
+      setSnackbarVisible(true);
+    }
+  };
+
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    console.log("HomeScreen: Rendering LoginScreen");
     return <LoginScreen />;
   }
 
-  // When authenticated, show home screen content
-  console.log("HomeScreen: Rendering home content for user:", user);
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Create Receipt</Text>
+      </View>
+
+      <ScrollView style={styles.scrollView}>
         <View style={styles.formContainer}>
           <View style={[styles.fieldRow, styles.customerRow]}>
             <Text style={styles.customerLabel}>Customer:</Text>
@@ -347,8 +540,10 @@ export default function HomeScreen() {
         </View>
 
         <TouchableOpacity style={styles.printButton} onPress={onSubmit}>
-          <Text style={styles.buttonText}>Print Receipt</Text>
+          <Text style={styles.buttonText}>Save</Text>
         </TouchableOpacity>
+
+        <View style={styles.spacer}></View>
 
         {/* Receipt Preview Modal */}
         <Modal
@@ -490,7 +685,7 @@ export default function HomeScreen() {
                     <View style={styles.actualReceiptRow}>
                       <Text style={styles.actualReceiptLabel}>DATE:</Text>
                       <Text style={styles.actualReceiptValue}>
-                        {currentDate}
+                        {currentDateTime}
                       </Text>
                     </View>
                   </View>
@@ -574,11 +769,7 @@ export default function HomeScreen() {
               <View style={styles.printPreviewButtons}>
                 <TouchableOpacity
                   style={styles.confirmPrintButton}
-                  onPress={() => {
-                    Alert.alert("Printing", "Sending receipt to printer...");
-                    setShowPrintPreview(false);
-                    setShowReceiptModal(false);
-                  }}
+                  onPress={handlePrint}
                 >
                   <Text style={styles.buttonText}>Confirm Print</Text>
                 </TouchableOpacity>
@@ -593,22 +784,40 @@ export default function HomeScreen() {
             </View>
           </View>
         </Modal>
-      </View>
+      </ScrollView>
+
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={3000}
+        style={styles.snackbar}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  container: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 15, // Reduced from 80 since SafeAreaView handles bottom safe area
+  header: {
+    backgroundColor: "#1a5653",
+    padding: 16,
+    paddingTop: 60,
     alignItems: "center",
-    justifyContent: "center", // Center content vertically
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "white",
+  },
+  scrollView: {
+    flex: 1,
+    padding: 16,
   },
   formContainer: {
     width: "100%",
@@ -710,14 +919,12 @@ const styles = StyleSheet.create({
     color: "#4a90e2",
   },
   printButton: {
-    position: "absolute",
-    bottom: 15, // Adjusted from 90 since SafeAreaView handles bottom safe area
-    left: 20,
-    right: 20,
     backgroundColor: "#4a90e2",
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
+    marginHorizontal: 20,
+    marginTop: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -989,5 +1196,18 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     flex: 1,
     marginRight: 10,
+  },
+  snackbar: {
+    position: "absolute",
+    bottom: 20,
+    left: 10,
+    right: 10,
+    backgroundColor: "#1a5653",
+    borderRadius: 5,
+    elevation: 6,
+    zIndex: 1000,
+  },
+  spacer: {
+    height: 30,
   },
 });

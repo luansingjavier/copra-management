@@ -130,3 +130,21 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Printer Connection
+
+The application supports connecting to Bluetooth thermal printers for receipt printing. To use this feature:
+
+1. Navigate to the Explore tab
+2. Ensure your Bluetooth is enabled on your device
+3. Scan for available printers
+4. Connect to a printer by tapping the "Connect" button
+5. Once connected, you can print receipts from the Home tab
+
+Supported printer features:
+
+- Bluetooth thermal printer discovery
+- Printer connection management
+- Text-based receipt printing
+
+_Note: Make sure your printer is in pairing mode and is discoverable when scanning for devices._

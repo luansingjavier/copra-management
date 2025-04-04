@@ -27,13 +27,14 @@ const encryptPassword = async (password: string): Promise<string> => {
 export const initDatabase = async (): Promise<void> => {
   console.log("Initializing Realm database");
   try {
-    // Explicitly call initialize on realmDB
+    // Explicitly call initialize on realmDB and wait for it to complete
     await realmDB.initialize();
     console.log("Realm database explicitly initialized");
     return Promise.resolve();
   } catch (error) {
     console.error("Error initializing Realm database:", error);
-    return Promise.resolve(); // Resolve anyway to avoid blocking app startup
+    // Don't resolve silently, we need to know if this fails
+    return Promise.reject(error);
   }
 };
 
@@ -85,7 +86,47 @@ export const resetDatabase = async (): Promise<void> => {
   return realmDB.resetDatabase();
 };
 
-// Initialize the database on import
-initDatabase().catch((err) =>
-  console.error("Failed to initialize database:", err)
-);
+// Generate a unique receipt number
+export const generateUniqueReceiptNumber = async (): Promise<string> => {
+  // Forward to Realm implementation
+  return realmDB.generateUniqueReceiptNumber();
+};
+
+// Save a receipt record
+export const saveReceipt = async (
+  receiptNumber: string,
+  customer: string,
+  address: string,
+  copraPrice: string,
+  totalCopra: string,
+  totalDeduction: string,
+  transportationFee: string,
+  totalPrice: string
+): Promise<void> => {
+  // Forward to Realm implementation
+  return realmDB.saveReceipt(
+    receiptNumber,
+    customer,
+    address,
+    copraPrice,
+    totalCopra,
+    totalDeduction,
+    transportationFee,
+    totalPrice
+  );
+};
+
+// Get all receipts
+export const getAllReceipts = async (): Promise<any[]> => {
+  // Forward to Realm implementation
+  return realmDB.getAllReceipts();
+};
+
+// Initialize the database on import - with proper error handling
+console.log("Starting database initialization...");
+initDatabase()
+  .then(() => console.log("Database initialization successful"))
+  .catch((err) => {
+    console.error("Failed to initialize database:", err);
+    // Consider adding app-level error handling here
+  });
