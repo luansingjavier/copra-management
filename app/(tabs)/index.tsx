@@ -1,5 +1,14 @@
 import { StyleSheet } from "react-native";
-import { Text, View, TextInput, TouchableOpacity, Alert } from "react-native";
+import {
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  ScrollView,
+  Image,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../../store/authStore";
 import LoginScreen from "../../components/LoginScreen";
@@ -60,6 +69,8 @@ type ReceiptFormData = {
 export default function HomeScreen() {
   const { isAuthenticated, user } = useAuthStore();
   const [isLoadingDefaults, setIsLoadingDefaults] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   // Initialize react-hook-form
   const {
@@ -148,12 +159,25 @@ export default function HomeScreen() {
   }, [isAuthenticated]);
 
   const onSubmit = handleSubmit((data: ReceiptFormData) => {
-    Alert.alert(
-      "Print Receipt",
-      `Receipt for ${data.customer} will be printed with total amount of $${totalPrice}.`,
-      [{ text: "OK" }]
-    );
+    setShowReceiptModal(true);
   });
+
+  // Format the current date
+  const currentDate = useMemo(() => {
+    const date = new Date();
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }, []);
+
+  // Generate receipt number
+  const receiptNumber = useMemo(() => {
+    return `RCT-${Math.floor(Math.random() * 10000)
+      .toString()
+      .padStart(4, "0")}`;
+  }, [showPrintPreview]);
 
   // When not authenticated, show login screen
   if (!isAuthenticated) {
@@ -325,6 +349,250 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.printButton} onPress={onSubmit}>
           <Text style={styles.buttonText}>Print Receipt</Text>
         </TouchableOpacity>
+
+        {/* Receipt Preview Modal */}
+        <Modal
+          visible={showReceiptModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowReceiptModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.receiptContainer}>
+              <ScrollView>
+                <View style={styles.receiptHeader}>
+                  <Text style={styles.companyName}>Luansing Rice Mill</Text>
+                  <Text style={styles.receiptDate}>{currentDate}</Text>
+                </View>
+
+                <View style={styles.receiptDivider} />
+
+                <View style={styles.customerInfo}>
+                  <Text style={styles.receiptLabel}>Customer:</Text>
+                  <Text style={styles.receiptValue}>{watch("customer")}</Text>
+
+                  <Text style={styles.receiptLabel}>Address:</Text>
+                  <Text style={styles.receiptValue}>{watch("address")}</Text>
+                </View>
+
+                <View style={styles.receiptDivider} />
+
+                <View style={styles.receiptItem}>
+                  <Text style={styles.receiptLabel}>Copra Price/kg:</Text>
+                  <Text style={styles.receiptValue}>
+                    ₱{watch("copraPrice")}
+                  </Text>
+                </View>
+
+                <View style={styles.receiptItem}>
+                  <Text style={styles.receiptLabel}>Total Copra:</Text>
+                  <Text style={styles.receiptValue}>
+                    {watch("totalCopra")} kg
+                  </Text>
+                </View>
+
+                <View style={styles.receiptItem}>
+                  <Text style={styles.receiptLabel}>Deduction:</Text>
+                  <Text style={styles.receiptValue}>
+                    {watch("totalDeduction")} kg
+                  </Text>
+                </View>
+
+                <View style={styles.receiptItem}>
+                  <Text style={styles.receiptLabel}>Net Copra:</Text>
+                  <Text style={styles.receiptValue}>
+                    {(
+                      parseFloat(watch("totalCopra")) -
+                      parseFloat(watch("totalDeduction"))
+                    ).toFixed(2)}{" "}
+                    kg
+                  </Text>
+                </View>
+
+                <View style={styles.receiptItem}>
+                  <Text style={styles.receiptLabel}>Transportation Fee:</Text>
+                  <Text style={styles.receiptValue}>
+                    ₱{watch("transportationFee")}
+                  </Text>
+                </View>
+
+                <View style={styles.receiptDivider} />
+
+                <View style={styles.receiptTotal}>
+                  <Text style={styles.totalReceiptLabel}>TOTAL AMOUNT:</Text>
+                  <Text style={styles.totalReceiptValue}>₱{totalPrice}</Text>
+                </View>
+              </ScrollView>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.printReceiptButton}
+                  onPress={() => {
+                    setShowReceiptModal(false);
+                    // Small delay to ensure first modal is closed before second opens
+                    setTimeout(() => {
+                      setShowPrintPreview(true);
+                    }, 300);
+                  }}
+                >
+                  <Text style={styles.buttonText}>Print</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowReceiptModal(false)}
+                >
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Final Print Preview Modal */}
+        <Modal
+          visible={showPrintPreview}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowPrintPreview(false)}
+        >
+          <View style={styles.printPreviewOverlay}>
+            <View style={styles.printPreviewContainer}>
+              <View style={styles.printPreviewHeader}>
+                <Text style={styles.printPreviewTitle}>Print Preview</Text>
+              </View>
+
+              <ScrollView style={styles.printReceiptScroll}>
+                <View style={styles.actualReceipt}>
+                  {/* Company Header */}
+                  <View style={styles.actualReceiptHeader}>
+                    <Text style={styles.actualCompanyName}>
+                      LUANSING RICE MILL
+                    </Text>
+                    <Text style={styles.actualCompanyAddress}>
+                      #10 Odicon, Pasacao, Camarines Sur, Naga City, Philippines
+                    </Text>
+                    <Text style={styles.actualCompanyContact}>
+                      Cell: 09292800067
+                    </Text>
+                  </View>
+
+                  <View style={styles.actualReceiptDivider} />
+
+                  {/* Receipt Info */}
+                  <View style={styles.actualReceiptInfo}>
+                    <View style={styles.actualReceiptRow}>
+                      <Text style={styles.actualReceiptLabel}>RECEIPT NO:</Text>
+                      <Text style={styles.actualReceiptValue}>
+                        {receiptNumber}
+                      </Text>
+                    </View>
+                    <View style={styles.actualReceiptRow}>
+                      <Text style={styles.actualReceiptLabel}>DATE:</Text>
+                      <Text style={styles.actualReceiptValue}>
+                        {currentDate}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Customer Info */}
+                  <View style={styles.actualCustomerInfo}>
+                    <View style={styles.actualReceiptRow}>
+                      <Text style={styles.actualReceiptLabel}>CUSTOMER:</Text>
+                      <Text style={styles.actualReceiptValue}>
+                        {watch("customer")}
+                      </Text>
+                    </View>
+                    <View style={styles.actualReceiptRow}>
+                      <Text style={styles.actualReceiptLabel}>ADDRESS:</Text>
+                      <Text style={styles.actualReceiptValue}>
+                        {watch("address")}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.actualReceiptDivider} />
+
+                  {/* Items */}
+                  <View style={styles.actualReceiptItems}>
+                    <View style={styles.actualReceiptItemHeader}>
+                      <Text style={styles.actualItemHeaderText}>ITEM</Text>
+                      <Text style={styles.actualItemHeaderText}>AMOUNT</Text>
+                    </View>
+
+                    <View style={styles.actualReceiptItem}>
+                      <View style={styles.actualItemDescription}>
+                        <Text style={styles.actualItemName}>Copra</Text>
+                        <Text style={styles.actualItemDetail}>
+                          {watch("totalCopra")} kg @ ₱{watch("copraPrice")}/kg
+                        </Text>
+                        <Text style={styles.actualItemDetail}>
+                          Less: {watch("totalDeduction")} kg deduction
+                        </Text>
+                      </View>
+                      <Text style={styles.actualItemAmount}>
+                        ₱
+                        {(
+                          (parseFloat(watch("totalCopra")) -
+                            parseFloat(watch("totalDeduction"))) *
+                          parseFloat(watch("copraPrice"))
+                        ).toFixed(2)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.actualReceiptItem}>
+                      <View style={styles.actualItemDescription}>
+                        <Text style={styles.actualItemName}>
+                          Transportation Fee
+                        </Text>
+                      </View>
+                      <Text style={styles.actualItemAmount}>
+                        ₱{watch("transportationFee")}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.actualReceiptDivider} />
+
+                  {/* Total */}
+                  <View style={styles.actualReceiptTotal}>
+                    <Text style={styles.actualTotalLabel}>TOTAL AMOUNT:</Text>
+                    <Text style={styles.actualTotalValue}>₱{totalPrice}</Text>
+                  </View>
+
+                  <View style={styles.actualReceiptFooter}>
+                    <Text style={styles.actualFooterText}>
+                      Thank you for your business!
+                    </Text>
+                    <Text style={styles.actualFooterText}>
+                      * This serves as your official receipt *
+                    </Text>
+                  </View>
+                </View>
+              </ScrollView>
+
+              <View style={styles.printPreviewButtons}>
+                <TouchableOpacity
+                  style={styles.confirmPrintButton}
+                  onPress={() => {
+                    Alert.alert("Printing", "Sending receipt to printer...");
+                    setShowPrintPreview(false);
+                    setShowReceiptModal(false);
+                  }}
+                >
+                  <Text style={styles.buttonText}>Confirm Print</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setShowPrintPreview(false)}
+                >
+                  <Text style={styles.closeButtonText}>Back</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -460,6 +728,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
   },
   errorText: {
     color: "#e74c3c",
@@ -471,5 +740,254 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: "#e74c3c",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  receiptContainer: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    width: "90%",
+    maxHeight: "80%",
+  },
+  receiptHeader: {
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  companyName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  receiptDate: {
+    fontSize: 14,
+    color: "#555",
+  },
+  receiptDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    marginVertical: 10,
+  },
+  customerInfo: {
+    marginBottom: 10,
+  },
+  receiptItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 5,
+  },
+  receiptLabel: {
+    fontSize: 14,
+    color: "#555",
+  },
+  receiptValue: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  receiptTotal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+  },
+  totalReceiptLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  totalReceiptValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#4a90e2",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  printReceiptButton: {
+    backgroundColor: "#4a90e2",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
+  },
+  closeButton: {
+    backgroundColor: "#f1f1f1",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: 10,
+  },
+  closeButtonText: {
+    color: "#333",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  printPreviewOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  printPreviewContainer: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    width: "95%",
+    maxHeight: "90%",
+    overflow: "hidden",
+  },
+  printPreviewHeader: {
+    backgroundColor: "#4a90e2",
+    padding: 15,
+    alignItems: "center",
+  },
+  printPreviewTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  printReceiptScroll: {
+    padding: 15,
+    maxHeight: "75%",
+  },
+  actualReceipt: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+  },
+  actualReceiptHeader: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  actualCompanyName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 2,
+  },
+  actualCompanyAddress: {
+    fontSize: 12,
+    marginBottom: 2,
+    textAlign: "center",
+  },
+  actualCompanyContact: {
+    fontSize: 12,
+    textAlign: "center",
+  },
+  actualReceiptDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.2)",
+    marginVertical: 10,
+  },
+  actualReceiptInfo: {
+    marginBottom: 10,
+  },
+  actualCustomerInfo: {
+    marginBottom: 10,
+  },
+  actualReceiptRow: {
+    flexDirection: "row",
+    marginBottom: 5,
+  },
+  actualReceiptLabel: {
+    fontSize: 12,
+    fontWeight: "bold",
+    width: 80,
+  },
+  actualReceiptValue: {
+    fontSize: 12,
+    flex: 1,
+  },
+  actualReceiptItems: {
+    marginBottom: 10,
+  },
+  actualReceiptItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    paddingBottom: 5,
+  },
+  actualItemHeaderText: {
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  actualReceiptItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  actualItemDescription: {
+    flex: 2,
+  },
+  actualItemName: {
+    fontSize: 12,
+    fontWeight: "500",
+  },
+  actualItemDetail: {
+    fontSize: 10,
+    color: "#555",
+  },
+  actualItemAmount: {
+    fontSize: 12,
+    fontWeight: "500",
+    flex: 1,
+    textAlign: "right",
+  },
+  actualReceiptTotal: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 5,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+  },
+  actualTotalLabel: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  actualTotalValue: {
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  actualReceiptFooter: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  actualFooterText: {
+    fontSize: 10,
+    color: "#555",
+    marginBottom: 2,
+  },
+  printPreviewButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 15,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+  },
+  confirmPrintButton: {
+    backgroundColor: "#4a90e2",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 10,
   },
 });
