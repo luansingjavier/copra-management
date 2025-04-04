@@ -8,6 +8,8 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
+import { Platform, View } from "react-native";
+import Constants from "expo-constants";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -16,6 +18,9 @@ import { initDatabase } from "@/database/database";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Define app colors
+const headerColor = "#2a9d8f";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -70,11 +75,22 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <View
+        style={{
+          backgroundColor: headerColor,
+          height: Constants.statusBarHeight,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 9999,
+        }}
+      />
+      <StatusBar style="light" backgroundColor={headerColor} />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="auto" />
     </ThemeProvider>
   );
 }

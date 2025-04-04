@@ -13,6 +13,7 @@ import { getAllReceipts } from "@/database/database";
 import { formatDate } from "@/utils/dateUtils";
 import { router } from "expo-router";
 import { useAuthStore } from "@/store/authStore";
+import Constants from "expo-constants";
 
 interface Receipt {
   id: string;
@@ -149,13 +150,13 @@ export default function History() {
           placeholder="Search by receipt number, customer, or address"
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholderTextColor="#999"
+          placeholderTextColor="#9ca3af"
         />
       </View>
 
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0066cc" />
+          <ActivityIndicator size="large" color="#1a5653" />
           <Text style={styles.loadingText}>Loading receipts...</Text>
         </View>
       ) : (
@@ -175,7 +176,12 @@ export default function History() {
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.listContainer}
               refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={["#1a5653"]}
+                  tintColor="#1a5653"
+                />
               }
             />
           )}
@@ -188,32 +194,42 @@ export default function History() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8fafc",
+    paddingBottom: 80,
   },
   header: {
-    backgroundColor: "#1a5653",
+    backgroundColor: "#2a9d8f",
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 0,
+    marginTop: -Constants.statusBarHeight,
+    paddingBottom: 16,
     alignItems: "center",
     justifyContent: "center",
+    height: 80 + Constants.statusBarHeight,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
+    marginTop: 40 + Constants.statusBarHeight,
   },
   searchContainer: {
     padding: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#e5e7eb",
+    elevation: 0,
   },
   searchInput: {
-    height: 40,
-    backgroundColor: "#f5f5f5",
+    height: 44,
+    backgroundColor: "#f9fafb",
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   listContainer: {
     padding: 16,
@@ -226,7 +242,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: "#555",
+    color: "#6b7280",
   },
   emptyContainer: {
     flex: 1,
@@ -235,35 +251,33 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: "#555",
+    color: "#6b7280",
   },
   receiptItem: {
     backgroundColor: "white",
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    elevation: 0,
   },
   receiptHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingBottom: 8,
+    borderBottomColor: "#e5e7eb",
+    paddingBottom: 12,
   },
   receiptNumber: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#1a5653",
+    color: "#2a9d8f",
   },
   receiptDate: {
     fontSize: 14,
-    color: "#666",
+    color: "#6b7280",
   },
   receiptDetails: {
     flex: 1,
@@ -272,16 +286,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 4,
+    color: "#374151",
   },
   address: {
     fontSize: 14,
-    color: "#666",
+    color: "#6b7280",
     marginBottom: 12,
   },
   transactionDetails: {
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "#f9fafb",
     padding: 12,
-    borderRadius: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   detailRow: {
     flexDirection: "row",
@@ -290,28 +307,29 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: "#555",
+    color: "#6b7280",
   },
   detailValue: {
     fontSize: 14,
     fontWeight: "500",
+    color: "#374151",
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
-    paddingTop: 8,
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: "#e5e7eb",
   },
   totalLabel: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: "#2a9d8f",
   },
   totalValue: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#1a5653",
+    color: "#2a9d8f",
   },
 });

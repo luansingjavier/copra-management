@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuthStore } from "../../store/authStore";
 import LoginScreen from "../../components/LoginScreen";
 import SettingsScreen from "../../components/SettingsScreen";
+import Constants from "expo-constants";
 
 function Settings() {
   const { isAuthenticated } = useAuthStore();
@@ -15,7 +16,7 @@ function Settings() {
     return <LoginScreen />;
   }
 
-  // When authenticated, show settings screen wrapped in SafeAreaView
+  // When authenticated, show settings screen without duplicating the header
   return (
     <SafeAreaView style={styles.safeArea}>
       <SettingsScreen />

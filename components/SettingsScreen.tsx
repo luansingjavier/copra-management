@@ -10,6 +10,7 @@ import {
   TextInput,
   SafeAreaView,
 } from "react-native";
+import Constants from "expo-constants";
 import { useAuthStore } from "../store/authStore";
 import {
   resetDatabase,
@@ -110,7 +111,7 @@ const SettingsScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
       </View>
@@ -174,75 +175,85 @@ const SettingsScreen = () => {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8fafc",
   },
   header: {
-    backgroundColor: "#1a5653",
+    backgroundColor: "#2a9d8f",
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 0,
+    marginTop: -Constants.statusBarHeight,
+    paddingBottom: 16,
     alignItems: "center",
     justifyContent: "center",
+    height: 90 + Constants.statusBarHeight,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
+    marginTop: 35 + Constants.statusBarHeight,
   },
   scrollContainer: {
     flex: 1,
     padding: 16,
   },
   section: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
+    backgroundColor: "white",
+    borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    elevation: 0,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "600",
+    color: "#374151",
     marginBottom: 16,
   },
   label: {
     fontSize: 16,
     marginBottom: 8,
+    color: "#4b5563",
   },
   input: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 4,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
     padding: 12,
     marginBottom: 16,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   button: {
-    backgroundColor: "#4a80f5",
-    borderRadius: 4,
-    padding: 12,
+    backgroundColor: "#2a9d8f",
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     alignItems: "center",
     marginBottom: 8,
+    elevation: 0,
   },
   buttonText: {
-    color: "#fff",
+    color: "white",
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "600",
   },
   dangerButton: {
-    backgroundColor: "#e53935",
+    backgroundColor: "#ef4444",
   },
   warning: {
-    color: "#e53935",
+    color: "#ef4444",
     fontSize: 14,
     marginTop: 8,
   },

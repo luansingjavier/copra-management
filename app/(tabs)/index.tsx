@@ -25,6 +25,7 @@ import PrinterService from "../../services/PrinterServiceFactory";
 import LoginScreen from "../../components/LoginScreen";
 import { router } from "expo-router";
 import { Snackbar } from "react-native-paper";
+import Constants from "expo-constants";
 
 // Form validation schema
 const receiptFormSchema = yup.object().shape({
@@ -383,165 +384,169 @@ Thank you for your business!
       </View>
 
       <ScrollView style={styles.scrollView}>
-        <View style={styles.formContainer}>
-          <View style={[styles.fieldRow, styles.customerRow]}>
-            <Text style={styles.customerLabel}>Customer:</Text>
-            <Controller
-              control={control}
-              name="customer"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.customerInput,
-                    errors.customer && styles.inputError,
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Enter customer name"
-                />
-              )}
-            />
-          </View>
-          {errors.customer && (
-            <Text style={styles.errorText}>{errors.customer.message}</Text>
-          )}
+        <View style={styles.cardContainer}>
+          <View style={styles.formContainer}>
+            <View style={[styles.fieldRow, styles.customerRow]}>
+              <Text style={styles.customerLabel}>Customer:</Text>
+              <Controller
+                control={control}
+                name="customer"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.customerInput,
+                      errors.customer && styles.inputError,
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Enter customer name"
+                  />
+                )}
+              />
+            </View>
+            {errors.customer && (
+              <Text style={styles.errorText}>{errors.customer.message}</Text>
+            )}
 
-          <View style={[styles.fieldRow, styles.addressRow]}>
-            <Text style={styles.customerLabel}>Address:</Text>
-            <Controller
-              control={control}
-              name="address"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.addressInput,
-                    errors.address && styles.inputError,
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Enter complete address"
-                  multiline={true}
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-              )}
-            />
-          </View>
-          {errors.address && (
-            <Text style={styles.errorText}>{errors.address.message}</Text>
-          )}
+            <View style={[styles.fieldRow, styles.addressRow]}>
+              <Text style={styles.customerLabel}>Address:</Text>
+              <Controller
+                control={control}
+                name="address"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.addressInput,
+                      errors.address && styles.inputError,
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Enter complete address"
+                    multiline={true}
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                  />
+                )}
+              />
+            </View>
+            {errors.address && (
+              <Text style={styles.errorText}>{errors.address.message}</Text>
+            )}
 
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Copra price/kl:</Text>
-            <Controller
-              control={control}
-              name="copraPrice"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.fieldInput,
-                    errors.copraPrice && styles.inputError,
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="numeric"
-                />
-              )}
-            />
-          </View>
-          {errors.copraPrice && (
-            <Text style={styles.errorText}>{errors.copraPrice.message}</Text>
-          )}
+            <Text style={styles.sectionTitle}>Transaction Details</Text>
 
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Total Copra (kgs):</Text>
-            <Controller
-              control={control}
-              name="totalCopra"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.fieldInput,
-                    errors.totalCopra && styles.inputError,
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="numeric"
-                />
-              )}
-            />
-          </View>
-          {errors.totalCopra && (
-            <Text style={styles.errorText}>{errors.totalCopra.message}</Text>
-          )}
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Copra price/kl:</Text>
+              <Controller
+                control={control}
+                name="copraPrice"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      errors.copraPrice && styles.inputError,
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="numeric"
+                  />
+                )}
+              />
+            </View>
+            {errors.copraPrice && (
+              <Text style={styles.errorText}>{errors.copraPrice.message}</Text>
+            )}
 
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Total Deduction (kgs):</Text>
-            <Controller
-              control={control}
-              name="totalDeduction"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.fieldInput,
-                    errors.totalDeduction && styles.inputError,
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="numeric"
-                />
-              )}
-            />
-          </View>
-          {errors.totalDeduction && (
-            <Text style={styles.errorText}>
-              {errors.totalDeduction.message}
-            </Text>
-          )}
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Total Copra (kgs):</Text>
+              <Controller
+                control={control}
+                name="totalCopra"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      errors.totalCopra && styles.inputError,
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="numeric"
+                  />
+                )}
+              />
+            </View>
+            {errors.totalCopra && (
+              <Text style={styles.errorText}>{errors.totalCopra.message}</Text>
+            )}
 
-          <View style={styles.fieldRow}>
-            <Text style={styles.fieldLabel}>Transportation Fee:</Text>
-            <Controller
-              control={control}
-              name="transportationFee"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  style={[
-                    styles.fieldInput,
-                    errors.transportationFee && styles.inputError,
-                  ]}
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  keyboardType="numeric"
-                />
-              )}
-            />
-          </View>
-          {errors.transportationFee && (
-            <Text style={styles.errorText}>
-              {errors.transportationFee.message}
-            </Text>
-          )}
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Total Deduction (kgs):</Text>
+              <Controller
+                control={control}
+                name="totalDeduction"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      errors.totalDeduction && styles.inputError,
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="numeric"
+                  />
+                )}
+              />
+            </View>
+            {errors.totalDeduction && (
+              <Text style={styles.errorText}>
+                {errors.totalDeduction.message}
+              </Text>
+            )}
 
-          <View style={[styles.fieldRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total Price:</Text>
-            <TextInput
-              style={styles.totalInput}
-              value={totalPrice}
-              editable={false}
-            />
+            <View style={styles.fieldRow}>
+              <Text style={styles.fieldLabel}>Transportation Fee:</Text>
+              <Controller
+                control={control}
+                name="transportationFee"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.fieldInput,
+                      errors.transportationFee && styles.inputError,
+                    ]}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    keyboardType="numeric"
+                  />
+                )}
+              />
+            </View>
+            {errors.transportationFee && (
+              <Text style={styles.errorText}>
+                {errors.transportationFee.message}
+              </Text>
+            )}
+
+            <View style={[styles.fieldRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total Price:</Text>
+              <TextInput
+                style={styles.totalInput}
+                value={`₱ ${totalPrice}`}
+                editable={false}
+              />
+            </View>
           </View>
+
+          <TouchableOpacity style={styles.saveButton} onPress={onSubmit}>
+            <Text style={styles.buttonText}>Save Receipt</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={styles.printButton} onPress={onSubmit}>
-          <Text style={styles.buttonText}>Save</Text>
-        </TouchableOpacity>
 
         <View style={styles.spacer}></View>
 
@@ -801,135 +806,154 @@ Thank you for your business!
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#f8fafc",
+    paddingBottom: 80,
   },
   header: {
-    backgroundColor: "#1a5653",
+    backgroundColor: "#2a9d8f",
     padding: 16,
-    paddingTop: 60,
+    paddingTop: 0,
+    marginTop: -Constants.statusBarHeight,
+    paddingBottom: 16,
     alignItems: "center",
     justifyContent: "center",
+    height: 80 + Constants.statusBarHeight,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
+    marginTop: 40 + Constants.statusBarHeight,
   },
   scrollView: {
     flex: 1,
     padding: 16,
   },
+  cardContainer: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 4,
+  },
   formContainer: {
     width: "100%",
-    marginBottom: 20,
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1a5653",
+    marginVertical: 12,
+    paddingHorizontal: 10,
   },
   fieldRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 15,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     backgroundColor: "white",
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
   },
   customerRow: {
-    backgroundColor: "#f0f7ff",
-    borderLeftWidth: 4,
-    borderLeftColor: "#4a90e2",
+    borderLeftWidth: 3,
+    borderLeftColor: "#1a5653",
+    backgroundColor: "#f9fafb",
   },
   addressRow: {
     alignItems: "flex-start",
-    paddingVertical: 10,
-    backgroundColor: "#f0f7ff",
-    borderLeftWidth: 4,
-    borderLeftColor: "#4a90e2",
+    paddingVertical: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: "#1a5653",
+    backgroundColor: "#f9fafb",
   },
   totalRow: {
-    backgroundColor: "#f8f9ff",
+    backgroundColor: "#f0f9f6",
     borderWidth: 1,
-    borderColor: "#4a90e2",
+    borderColor: "#1a5653",
+    marginTop: 8,
   },
   fieldLabel: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
+    color: "#374151",
     flex: 1,
   },
   customerLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#2c3e50",
+    color: "#1a5653",
     flex: 1,
   },
   totalLabel: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#333",
+    color: "#1a5653",
     flex: 1,
   },
   fieldInput: {
     flex: 1,
-    height: 40,
+    height: 44,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    backgroundColor: "#fafafa",
+    borderColor: "#d1d5db",
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    backgroundColor: "#fff",
     textAlign: "right",
+    fontSize: 15,
   },
   customerInput: {
     flex: 1,
-    height: 40,
+    height: 44,
     borderWidth: 1,
-    borderColor: "#b6d4fe",
-    borderRadius: 4,
-    paddingHorizontal: 10,
+    borderColor: "#d1d5db",
+    borderRadius: 6,
+    paddingHorizontal: 12,
     backgroundColor: "white",
     textAlign: "left",
-    fontSize: 16,
+    fontSize: 15,
   },
   addressInput: {
     flex: 1,
     height: 80,
     borderWidth: 1,
-    borderColor: "#b6d4fe",
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    borderColor: "#d1d5db",
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     backgroundColor: "white",
     textAlign: "left",
+    fontSize: 15,
   },
   totalInput: {
     flex: 1,
-    height: 40,
+    height: 44,
     borderWidth: 1,
-    borderColor: "#4a90e2",
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    backgroundColor: "#f0f8ff",
+    borderColor: "#1a5653",
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    backgroundColor: "white",
     textAlign: "right",
     fontSize: 18,
     fontWeight: "700",
-    color: "#4a90e2",
+    color: "#1a5653",
   },
-  printButton: {
-    backgroundColor: "#4a90e2",
+  saveButton: {
+    backgroundColor: "#2a9d8f",
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: "center",
-    marginHorizontal: 20,
-    marginTop: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: 16,
+    elevation: 0,
   },
   buttonText: {
     color: "white",
@@ -938,29 +962,34 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   errorText: {
-    color: "#e74c3c",
-    marginBottom: 5,
+    color: "#e53e3e",
+    marginBottom: 8,
     marginTop: -5,
     marginLeft: 10,
     textAlign: "left",
     fontSize: 12,
   },
   inputError: {
-    borderColor: "#e74c3c",
+    borderColor: "#e53e3e",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
   receiptContainer: {
     backgroundColor: "white",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
     width: "90%",
     maxHeight: "80%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   receiptHeader: {
     alignItems: "center",
@@ -970,48 +999,51 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 5,
+    color: "#1a5653",
   },
   receiptDate: {
     fontSize: 14,
-    color: "#555",
+    color: "#6b7280",
   },
   receiptDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    marginVertical: 10,
+    borderBottomColor: "#e5e7eb",
+    marginVertical: 12,
   },
   customerInfo: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   receiptItem: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginVertical: 5,
+    marginVertical: 6,
   },
   receiptLabel: {
     fontSize: 14,
-    color: "#555",
+    color: "#6b7280",
   },
   receiptValue: {
     fontSize: 14,
     fontWeight: "500",
+    color: "#374151",
   },
   receiptTotal: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: "#ddd",
+    borderTopColor: "#e5e7eb",
   },
   totalReceiptLabel: {
     fontSize: 16,
     fontWeight: "bold",
+    color: "#1a5653",
   },
   totalReceiptValue: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#4a90e2",
+    color: "#1a5653",
   },
   modalButtons: {
     flexDirection: "row",
@@ -1019,23 +1051,29 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   printReceiptButton: {
-    backgroundColor: "#4a90e2",
-    paddingVertical: 10,
+    backgroundColor: "#2a9d8f",
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius: 8,
     flex: 1,
     marginRight: 10,
+    alignItems: "center",
+    elevation: 0,
   },
   closeButton: {
-    backgroundColor: "#f1f1f1",
-    paddingVertical: 10,
+    backgroundColor: "#f3f4f6",
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 5,
+    borderRadius: 8,
     flex: 1,
     marginLeft: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    elevation: 0,
   },
   closeButtonText: {
-    color: "#333",
+    color: "#4b5563",
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
@@ -1048,15 +1086,20 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   printPreviewContainer: {
-    backgroundColor: "#f0f0f0",
-    borderRadius: 10,
+    backgroundColor: "#fff",
+    borderRadius: 12,
     width: "95%",
     maxHeight: "90%",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   printPreviewHeader: {
-    backgroundColor: "#4a90e2",
-    padding: 15,
+    backgroundColor: "#2a9d8f",
+    padding: 16,
     alignItems: "center",
   },
   printPreviewTitle: {
@@ -1065,7 +1108,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   printReceiptScroll: {
-    padding: 15,
+    padding: 16,
     maxHeight: "75%",
   },
   actualReceipt: {
@@ -1190,7 +1233,7 @@ const styles = StyleSheet.create({
     borderTopColor: "#ddd",
   },
   confirmPrintButton: {
-    backgroundColor: "#4a90e2",
+    backgroundColor: "#2a9d8f",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -1202,8 +1245,8 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 10,
     right: 10,
-    backgroundColor: "#1a5653",
-    borderRadius: 5,
+    backgroundColor: "#2a9d8f",
+    borderRadius: 6,
     elevation: 6,
     zIndex: 1000,
   },

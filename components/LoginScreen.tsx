@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  SafeAreaView,
 } from "react-native";
 import { useAuthStore } from "../store/authStore";
 import { router } from "expo-router";
 import * as yup from "yup";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import Constants from "expo-constants";
 
 // Login validation schema
 const loginSchema = yup.object().shape({
@@ -101,95 +104,135 @@ const LoginScreen = () => {
   };
 
   // Helper text for testing
-  const loginHelp = "Use: luansingjavier / thgirb11";
+  // Commented out for security in production
+  // const loginHelp = "Use: luansingjavier / thgirb11";
+  const loginHelp = "";
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Luansing Copra Management</Text>
-
-        <Controller
-          control={control}
-          name="username"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <>
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.username ? styles.inputError : null,
-                ]}
-                placeholder="Username"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                autoCapitalize="none"
-              />
-              {errors.username && (
-                <Text style={styles.errorText}>{errors.username.message}</Text>
-              )}
-            </>
-          )}
-        />
-
-        <Controller
-          control={control}
-          name="password"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <>
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.password ? styles.inputError : null,
-                ]}
-                placeholder="Password"
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry
-              />
-              {errors.password && (
-                <Text style={styles.errorText}>{errors.password.message}</Text>
-              )}
-            </>
-          )}
-        />
-
-        {error && <Text style={styles.errorText}>{error}</Text>}
-
-        <Text style={styles.helpText}>{loginHelp}</Text>
-
-        {debugMsg ? <Text style={styles.debugText}>{debugMsg}</Text> : null}
-
-        <TouchableOpacity
-          style={styles.loginButton}
-          onPress={handleSubmit(onSubmit)}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Text style={styles.buttonText}>Login</Text>
-          )}
-        </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Luansing Rice Mill</Text>
       </View>
-    </KeyboardAvoidingView>
+
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>Login to Your Account</Text>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Username</Text>
+            <Controller
+              control={control}
+              name="username"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      errors.username ? styles.inputError : null,
+                    ]}
+                    placeholder="Enter your username"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    autoCapitalize="none"
+                  />
+                  {errors.username && (
+                    <Text style={styles.errorText}>
+                      {errors.username.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      errors.password ? styles.inputError : null,
+                    ]}
+                    placeholder="Enter your password"
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry
+                  />
+                  {errors.password && (
+                    <Text style={styles.errorText}>
+                      {errors.password.message}
+                    </Text>
+                  )}
+                </>
+              )}
+            />
+          </View>
+
+          {error && <Text style={styles.errorText}>{error}</Text>}
+
+          {/* Only show help text if it's not empty */}
+          {loginHelp ? <Text style={styles.helpText}>{loginHelp}</Text> : null}
+
+          {debugMsg ? <Text style={styles.debugText}>{debugMsg}</Text> : null}
+
+          <TouchableOpacity
+            style={styles.loginButton}
+            onPress={handleSubmit(onSubmit)}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Login</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f8fafc",
+  },
+  header: {
+    backgroundColor: "#2a9d8f",
+    padding: 16,
+    paddingTop: 0,
+    marginTop: -Constants.statusBarHeight,
+    paddingBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 80 + Constants.statusBarHeight,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "white",
+    marginTop: 35 + Constants.statusBarHeight,
+  },
   container: {
     flex: 1,
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#f5f5f5",
   },
   formContainer: {
     backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
+    padding: 24,
+    borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -197,32 +240,42 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
-    marginBottom: 30,
+    marginBottom: 24,
     textAlign: "center",
-    color: "#333",
+    color: "#2a9d8f",
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    marginBottom: 8,
+    color: "#4b5563",
   },
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginBottom: 10,
-    paddingHorizontal: 15,
+    borderColor: "#e5e7eb",
+    borderRadius: 10,
+    paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: "#fafafa",
+    backgroundColor: "#f9fafb",
   },
   inputError: {
-    borderColor: "#e74c3c",
+    borderColor: "#ef4444",
+    borderWidth: 1,
   },
   loginButton: {
-    backgroundColor: "#4a90e2",
+    backgroundColor: "#2a9d8f",
     height: 50,
-    borderRadius: 8,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 16,
+    elevation: 0,
   },
   buttonText: {
     color: "white",
@@ -230,23 +283,22 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   errorText: {
-    color: "#e74c3c",
-    marginBottom: 10,
-    textAlign: "left",
-    fontSize: 12,
+    color: "#ef4444",
+    marginTop: 6,
+    fontSize: 14,
   },
   helpText: {
-    color: "#555",
-    marginBottom: 10,
+    color: "#6b7280",
+    marginVertical: 16,
     textAlign: "center",
     fontStyle: "italic",
     fontSize: 14,
   },
   debugText: {
-    color: "#666",
-    marginBottom: 10,
+    color: "#6b7280",
+    marginBottom: 16,
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 14,
   },
 });
 
