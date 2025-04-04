@@ -71,7 +71,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: "Home",
+            title: "",
+            headerTitle: "",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <IconSymbol name="house" color={color} size={24} />
             ),
@@ -81,7 +83,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="explore"
           options={{
-            title: "Printer",
+            title: "",
+            headerTitle: "",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <IconSymbol name="printer" color={color} size={24} />
             ),
@@ -91,7 +95,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="history"
           options={{
-            title: "History",
+            title: "",
+            headerTitle: "",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <IconSymbol name="clock" color={color} size={24} />
             ),
@@ -101,7 +107,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="settings"
           options={{
-            title: "Settings",
+            title: "",
+            headerTitle: "",
+            headerShown: false,
             tabBarIcon: ({ color, size }) => (
               <IconSymbol name="gearshape" color={color} size={24} />
             ),

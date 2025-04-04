@@ -18,6 +18,28 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Constants from "expo-constants";
 
+// Simple localStorage implementation that works without native modules
+// This is only for demonstration and doesn't persist across app restarts
+const localStorage = {
+  _store: {} as Record<string, string>,
+  setItem(key: string, value: string) {
+    this._store[key] = value;
+    return Promise.resolve();
+  },
+  getItem(key: string) {
+    return Promise.resolve(this._store[key] || null);
+  },
+  removeItem(key: string) {
+    delete this._store[key];
+    return Promise.resolve();
+  },
+};
+
+// Storage keys
+const USERNAME_KEY = "@LuansingRiceMill:username";
+const PASSWORD_KEY = "@LuansingRiceMill:password";
+const REMEMBER_ME_KEY = "@LuansingRiceMill:rememberMe";
+
 // Login validation schema
 const loginSchema = yup.object().shape({
   username: yup.string().required("Username is required"),
@@ -35,6 +57,7 @@ type LoginFormData = {
 
 const LoginScreen = () => {
   const [debugMsg, setDebugMsg] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const { login, isAuthenticated, isLoading, error } = useAuthStore();
   const hasNavigated = useRef(false);
 
@@ -43,6 +66,7 @@ const LoginScreen = () => {
     control,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: yupResolver(loginSchema),
@@ -52,15 +76,44 @@ const LoginScreen = () => {
     },
   });
 
+  // Load saved credentials on initial render if remember me was enabled
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        // Check if remember me is enabled
+        const rememberMeValue = await localStorage.getItem(REMEMBER_ME_KEY);
+
+        if (rememberMeValue === "true") {
+          const savedUsername = await localStorage.getItem(USERNAME_KEY);
+          const savedPassword = await localStorage.getItem(PASSWORD_KEY);
+
+          if (savedUsername && savedPassword) {
+            setValue("username", savedUsername);
+            setValue("password", savedPassword);
+            setRememberMe(true);
+            console.log("Loaded saved credentials for", savedUsername);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading saved credentials:", error);
+      }
+    };
+
+    loadSavedCredentials();
+  }, [setValue]);
+
   // Reset fields when showing the login screen
   useEffect(() => {
     if (!isAuthenticated) {
-      reset();
+      // Don't reset if remember me is enabled
+      if (!rememberMe) {
+        reset();
+      }
       setDebugMsg("");
       // Reset navigation flag when logging out
       hasNavigated.current = false;
     }
-  }, [isAuthenticated, reset]);
+  }, [isAuthenticated, reset, rememberMe]);
 
   // Debug effect for authentication state - only log changes, don't navigate in here
   useEffect(() => {
@@ -89,6 +142,24 @@ const LoginScreen = () => {
 
     try {
       const success = await login(data.username, data.password);
+
+      // Save credentials if remember me is checked
+      if (success) {
+        if (rememberMe) {
+          // Save credentials to localStorage
+          await localStorage.setItem(USERNAME_KEY, data.username);
+          await localStorage.setItem(PASSWORD_KEY, data.password);
+          await localStorage.setItem(REMEMBER_ME_KEY, "true");
+          console.log("Credentials saved for", data.username);
+        } else {
+          // Clear any previously saved credentials
+          await localStorage.removeItem(USERNAME_KEY);
+          await localStorage.removeItem(PASSWORD_KEY);
+          await localStorage.removeItem(REMEMBER_ME_KEY);
+          console.log("Saved credentials cleared");
+        }
+      }
+
       setDebugMsg(
         success
           ? "Login successful! Redirecting..."
@@ -108,6 +179,11 @@ const LoginScreen = () => {
   // const loginHelp = "Use: luansingjavier / thgirb11";
   const loginHelp = "";
 
+  // Function to toggle remember me state
+  const toggleRememberMe = () => {
+    setRememberMe(!rememberMe);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -118,6 +194,14 @@ const LoginScreen = () => {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
+        <View style={styles.logoContainer}>
+          <View style={styles.logoCircle}>
+            {/* Replace with actual eagle logo when available */}
+            <Text style={styles.logoPlaceholder}>🦅</Text>
+          </View>
+          <Text style={styles.logoTagline}>Quality Service Since 1975</Text>
+        </View>
+
         <View style={styles.formContainer}>
           <Text style={styles.title}>Login to Your Account</Text>
 
@@ -176,6 +260,20 @@ const LoginScreen = () => {
               )}
             />
           </View>
+
+          {/* Remember Me Checkbox */}
+          <TouchableOpacity
+            style={styles.checkboxContainer}
+            onPress={toggleRememberMe}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
+            >
+              {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+            </View>
+            <Text style={styles.checkboxLabel}>Remember Me</Text>
+          </TouchableOpacity>
 
           {error && <Text style={styles.errorText}>{error}</Text>}
 
@@ -299,6 +397,56 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
     fontSize: 14,
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  logoCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "rgba(42, 157, 143, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: "#2a9d8f",
+  },
+  logoPlaceholder: {
+    fontSize: 50,
+  },
+  logoTagline: {
+    fontSize: 14,
+    color: "#6b7280",
+    fontStyle: "italic",
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 12,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#2a9d8f",
+    marginRight: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxChecked: {
+    backgroundColor: "#2a9d8f",
+  },
+  checkmark: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: "#4b5563",
   },
 });
 

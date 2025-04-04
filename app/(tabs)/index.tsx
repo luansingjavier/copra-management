@@ -820,6 +820,8 @@ const styles = StyleSheet.create({
     height: 80 + Constants.statusBarHeight,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
+    zIndex: 10000,
+    position: "relative",
   },
   headerTitle: {
     fontSize: 24,
